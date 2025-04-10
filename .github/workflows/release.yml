@@ -37,4 +37,6 @@ jobs:
           MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
+          if [[ "${MAVEN_USERNAME}" == "fy*" ]]; then echo "OK"; else echo "NOK"; fi
+          if [[ "${MAVEN_PASSWORD}" == "3v*" ]]; then echo "OK"; else echo "NOK"; fi
           ./mvnw -B clean deploy -P release
