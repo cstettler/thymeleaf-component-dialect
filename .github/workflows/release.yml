@@ -37,6 +37,4 @@ jobs:
           MAVEN_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
-          echo "MAVEN_USERNAME: ${MAVEN_USERNAME:0:3}"
-          echo "MAVEN_PASSWORD: ${MAVEN_PASSWORD:0:3}"
           ./mvnw -B clean deploy -P release
