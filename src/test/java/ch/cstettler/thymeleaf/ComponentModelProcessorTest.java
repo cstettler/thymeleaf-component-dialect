@@ -15,20 +15,6 @@
  */
 package ch.cstettler.thymeleaf;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.thymeleaf.templatemode.TemplateMode.HTML;
-
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.thymeleaf.IEngineConfiguration;
@@ -43,11 +29,24 @@ import org.thymeleaf.model.ITemplateEnd;
 import org.thymeleaf.model.ITemplateEvent;
 import org.thymeleaf.model.ITemplateStart;
 import org.thymeleaf.model.IText;
-import org.thymeleaf.standard.StandardDialect;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 import org.thymeleaf.templateresolver.StringTemplateResolver;
 import org.thymeleaf.templateresolver.TemplateResolution;
+
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.thymeleaf.templatemode.TemplateMode.HTML;
 
 class ComponentModelProcessorTest {
 
@@ -98,9 +97,9 @@ class ComponentModelProcessorTest {
   @Test
   void simple_ifConditionViaParameter_renders() {
     String html = render(""
-      + "<th:block th:with='value=true'>"
-      + "  <pl:simple th:if='${value}' />"
-      + "</th:block>"
+        + "<th:block th:with='value=true'>"
+        + "  <pl:simple th:if='${value}' />"
+        + "</th:block>"
     );
 
     assertMarkupEquals("<i>simple</i>", html);
@@ -123,16 +122,16 @@ class ComponentModelProcessorTest {
   @Test
   void withDefaultSlot_slotContentDefined_rendersSlotContent() {
     String html = render(""
-      + "<pl:with-default-slot>"
-      + "  <i>slot-content</i>"
-      + "</pl:with-default-slot>"
+        + "<pl:with-default-slot>"
+        + "  <i>slot-content</i>"
+        + "</pl:with-default-slot>"
     );
 
     assertMarkupEquals(""
-      + "<div>"
-      + "  <i>with-default-slot</i>"
-      + "  <i>slot-content</i>"
-      + "</div>", html);
+        + "<div>"
+        + "  <i>with-default-slot</i>"
+        + "  <i>slot-content</i>"
+        + "</div>", html);
   }
 
   @Test
@@ -140,93 +139,93 @@ class ComponentModelProcessorTest {
     String html = render("<pl:with-default-slot></pl:with-default-slot>");
 
     assertMarkupEquals(""
-      + "<div>"
-      + "  <i>with-default-slot</i>"
-      + "</div>", html);
+        + "<div>"
+        + "  <i>with-default-slot</i>"
+        + "</div>", html);
   }
 
   @Test
   void withNamedSlots_slotContentsDefined_rendersSlotContents() {
     String html = render(""
-      + "<pl:with-named-slots>"
-      + "  <i pl:slot='slot-a'>slot-content-a</i>"
-      + "  <i pl:slot='slot-b'>slot-content-b</i>"
-      + "</pl:with-named-slots>"
+        + "<pl:with-named-slots>"
+        + "  <i pl:slot='slot-a'>slot-content-a</i>"
+        + "  <i pl:slot='slot-b'>slot-content-b</i>"
+        + "</pl:with-named-slots>"
     );
 
     assertMarkupEquals(""
-      + "<div>"
-      + "  <i>with-named-slots</i>"
-      + "  <div>"
-      + "    <i>slot-content-a</i>"
-      + "  </div>"
-      + "  <div>"
-      + "    <i>slot-content-b</i>"
-      + "  </div>"
-      + "</div>", html);
+        + "<div>"
+        + "  <i>with-named-slots</i>"
+        + "  <div>"
+        + "    <i>slot-content-a</i>"
+        + "  </div>"
+        + "  <div>"
+        + "    <i>slot-content-b</i>"
+        + "  </div>"
+        + "</div>", html);
   }
 
   @Test
   void withNamedSlots_slotContentsOnlyPartiallyDefined_rendersDefinedSlotContents() {
     String html = render(""
-      + "<pl:with-named-slots>"
-      + "  <i pl:slot='slot-a'>slot-content-a</i>"
-      + "</pl:with-named-slots>"
+        + "<pl:with-named-slots>"
+        + "  <i pl:slot='slot-a'>slot-content-a</i>"
+        + "</pl:with-named-slots>"
     );
 
     assertMarkupEquals(""
-      + "<div>"
-      + "  <i>with-named-slots</i>"
-      + "  <div>"
-      + "    <i>slot-content-a</i>"
-      + "  </div>"
-      + "  <div>"
-      + "  </div>"
-      + "</div>", html);
+        + "<div>"
+        + "  <i>with-named-slots</i>"
+        + "  <div>"
+        + "    <i>slot-content-a</i>"
+        + "  </div>"
+        + "  <div>"
+        + "  </div>"
+        + "</div>", html);
   }
 
   @Test
   void withDefaultAndNamedSlots_slotContentsDefined_rendersSlotContents() {
     String html = render(""
-      + "<pl:with-default-and-named-slots>"
-      + "  <i>default-slot-content</i>"
-      + "  <i pl:slot='slot-a'>slot-content-a</i>"
-      + "</pl:with-default-and-named-slots>"
+        + "<pl:with-default-and-named-slots>"
+        + "  <i>default-slot-content</i>"
+        + "  <i pl:slot='slot-a'>slot-content-a</i>"
+        + "</pl:with-default-and-named-slots>"
     );
 
     assertMarkupEquals(""
-      + "<div>"
-      + "  <i>with-default-and-named-slots</i>"
-      + "  <div>"
-      + "    <i>default-slot-content</i>"
-      + "  </div>"
-      + "  <div>"
-      + "    <i>slot-content-a</i>"
-      + "  </div>"
-      + "</div>", html);
+        + "<div>"
+        + "  <i>with-default-and-named-slots</i>"
+        + "  <div>"
+        + "    <i>default-slot-content</i>"
+        + "  </div>"
+        + "  <div>"
+        + "    <i>slot-content-a</i>"
+        + "  </div>"
+        + "</div>", html);
   }
 
   @Test
   void withDefaultAndNamedSlots_multipleDefaultSlotContentsDefined_rendersSlotContents() {
     String html = render(""
-      + "<pl:with-default-and-named-slots>"
-      + "  <i>default-slot-content</i>"
-      + "  <i>more-default-slot-content</i>"
-      + "  <i pl:slot='slot-a'>slot-content-a</i>"
-      + "</pl:with-default-and-named-slots>"
+        + "<pl:with-default-and-named-slots>"
+        + "  <i>default-slot-content</i>"
+        + "  <i>more-default-slot-content</i>"
+        + "  <i pl:slot='slot-a'>slot-content-a</i>"
+        + "</pl:with-default-and-named-slots>"
     );
 
     assertMarkupEquals(""
-      + "<div>"
-      + "  <i>with-default-and-named-slots</i>"
-      + "  <div>"
-      + "    <i>default-slot-content</i>"
-      + "    <i>more-default-slot-content</i>"
-      + "  </div>"
-      + "  <div>"
-      + "    <i>slot-content-a</i>"
-      + "  </div>"
-      + "</div>", html);
+        + "<div>"
+        + "  <i>with-default-and-named-slots</i>"
+        + "  <div>"
+        + "    <i>default-slot-content</i>"
+        + "    <i>more-default-slot-content</i>"
+        + "  </div>"
+        + "  <div>"
+        + "    <i>slot-content-a</i>"
+        + "  </div>"
+        + "</div>", html);
   }
 
   @Test
@@ -234,10 +233,10 @@ class ComponentModelProcessorTest {
     String html = render("<pl:with-slot-with-fallback><i>slot-content</i></pl:with-slot-with-fallback>");
 
     assertMarkupEquals(""
-      + "<div>"
-      + "  <i>with-slot-with-fallback</i>"
-      + "  <i>slot-content</i>"
-      + "</div>", html);
+        + "<div>"
+        + "  <i>with-slot-with-fallback</i>"
+        + "  <i>slot-content</i>"
+        + "</div>", html);
   }
 
   @Test
@@ -245,19 +244,19 @@ class ComponentModelProcessorTest {
     String html = render("<pl:with-slot-with-fallback></pl:with-slot-with-fallback>");
 
     assertMarkupEquals(""
-      + "<div>"
-      + "  <i>with-slot-with-fallback</i>"
-      + "  <p>fallback</p>"
-      + "</div>", html);
+        + "<div>"
+        + "  <i>with-slot-with-fallback</i>"
+        + "  <p>fallback</p>"
+        + "</div>", html);
   }
 
   @Test
   void subTree_rootStartTemplateEvent_returnsCompleteTree() {
     ITemplateEvent startTemplateEvent = openElementTag();
     List<ITemplateEvent> templateEvents = List.of(
-      startTemplateEvent,
-      textElementTag(),
-      closeElementTag()
+        startTemplateEvent,
+        textElementTag(),
+        closeElementTag()
     );
 
     IModel model = modelFor(templateEvents);
@@ -271,11 +270,11 @@ class ComponentModelProcessorTest {
   void subTree_nonRootStartTemplateEvent_returnsSubTree() {
     ITemplateEvent startTemplateEvent = openElementTag();
     List<ITemplateEvent> templateEvents = List.of(
-      openElementTag(),
-      startTemplateEvent,
-      textElementTag(),
-      closeElementTag(),
-      closeElementTag()
+        openElementTag(),
+        startTemplateEvent,
+        textElementTag(),
+        closeElementTag(),
+        closeElementTag()
     );
 
     IModel model = modelFor(templateEvents);
@@ -289,16 +288,16 @@ class ComponentModelProcessorTest {
   void subTree_fragmentRootAsStartTemplateEvent_returnsSubTree() {
     ITemplateEvent startTemplateEvent = openElementTag();
     List<ITemplateEvent> templateEvents = List.of(
-      templateStart(),
-      startTemplateEvent,
-      textElementTag(),
-      openElementTag(),
-      textElementTag(),
-      closeElementTag(),
-      textElementTag(),
-      closeElementTag(),
-      textElementTag(),
-      templateEnd()
+        templateStart(),
+        startTemplateEvent,
+        textElementTag(),
+        openElementTag(),
+        textElementTag(),
+        closeElementTag(),
+        textElementTag(),
+        closeElementTag(),
+        textElementTag(),
+        templateEnd()
     );
 
     IModel model = modelFor(templateEvents);
@@ -312,10 +311,10 @@ class ComponentModelProcessorTest {
   void subTree_standaloneTagAsStartTemplateEvent_returnsStandaloneTagOnly() {
     ITemplateEvent startTemplateEvent = standaloneElementTag();
     List<ITemplateEvent> templateEvents = List.of(
-      openElementTag(),
-      startTemplateEvent,
-      textElementTag(),
-      closeElementTag()
+        openElementTag(),
+        startTemplateEvent,
+        textElementTag(),
+        closeElementTag()
     );
 
     IModel model = modelFor(templateEvents);
@@ -329,12 +328,12 @@ class ComponentModelProcessorTest {
   void subTree_multipleSiblingSubTrees_returnsMatchingSubTree() {
     ITemplateEvent startTemplateEvent = openElementTag();
     List<ITemplateEvent> templateEvents = List.of(
-      startTemplateEvent,
-      textElementTag(),
-      closeElementTag(),
-      openElementTag(),
-      textElementTag(),
-      closeElementTag()
+        startTemplateEvent,
+        textElementTag(),
+        closeElementTag(),
+        openElementTag(),
+        textElementTag(),
+        closeElementTag()
     );
 
     IModel model = modelFor(templateEvents);
@@ -391,22 +390,22 @@ class ComponentModelProcessorTest {
 
   private static String trim(String value) {
     return value.replaceAll("^\\s+<", "<")
-      .replaceAll(">\\s+<", "><")
-      .replaceAll(">\\s+$", ">");
+        .replaceAll(">\\s+<", "><")
+        .replaceAll(">\\s+$", ">");
   }
 
   private static String render(String template) {
-    ComponentDialect componentDialect = new ComponentDialect();
-    componentDialect.addComponent("simple", "components/simple.html");
-    componentDialect.addComponent("with-parameter", "components/with-parameter.html");
-    componentDialect.addComponent("with-default-and-named-slots", "components/with-default-and-named-slots.html");
-    componentDialect.addComponent("with-default-slot", "components/with-default-slot.html");
-    componentDialect.addComponent("with-named-slots", "components/with-named-slots.html");
-    componentDialect.addComponent("with-slot-with-fallback", "components/with-slot-with-fallback.html");
+    ComponentDialect componentDialect = new ComponentDialect()
+        .addComponent("simple", "components/simple.html")
+        .addComponent("with-parameter", "components/with-parameter.html")
+        .addComponent("with-default-and-named-slots", "components/with-default-and-named-slots.html")
+        .addComponent("with-default-slot", "components/with-default-slot.html")
+        .addComponent("with-named-slots", "components/with-named-slots.html")
+        .addComponent("with-slot-with-fallback", "components/with-slot-with-fallback.html");
 
     TemplateEngine templateEngine = new TemplateEngine();
     templateEngine.setTemplateResolvers(setOf(new TemplateResolverChain(new ClassLoaderTemplateResolver(), new StringTemplateResolver())));
-    templateEngine.setDialects(setOf(new StandardDialect(), componentDialect));
+    templateEngine.addDialect(componentDialect);
     templateEngine.setCacheManager(null);
     templateEngine.clearTemplateCache();
 
@@ -440,13 +439,13 @@ class ComponentModelProcessorTest {
 
     @Override
     public TemplateResolution resolveTemplate(
-      IEngineConfiguration configuration, String ownerTemplate, String template, Map<String, Object> templateResolutionAttributes
+        IEngineConfiguration configuration, String ownerTemplate, String template, Map<String, Object> templateResolutionAttributes
     ) {
       return Arrays.stream(templateResolvers)
-        .map(templateResolver -> templateResolver.resolveTemplate(configuration, ownerTemplate, template, templateResolutionAttributes))
-        .filter(templateResolution -> templateResolution != null && templateResolution.getTemplateResource().exists())
-        .findFirst()
-        .orElseThrow(() -> new IllegalStateException("no template resolver found for template '" + template + "'"));
+          .map(templateResolver -> templateResolver.resolveTemplate(configuration, ownerTemplate, template, templateResolutionAttributes))
+          .filter(templateResolution -> templateResolution != null && templateResolution.getTemplateResource().exists())
+          .findFirst()
+          .orElseThrow(() -> new IllegalStateException("no template resolver found for template '" + template + "'"));
     }
   }
 }

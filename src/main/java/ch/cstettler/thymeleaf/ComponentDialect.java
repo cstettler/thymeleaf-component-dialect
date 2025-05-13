@@ -31,14 +31,6 @@ public class ComponentDialect extends AbstractProcessorDialect {
 
     this.processors = new HashSet<>();
     this.processors.add(new RemoveSlotAttributeProcessor(DIALECT_PREFIX, "slot"));
-
-    addComponent("button");
-    addComponent("alert");
-    addComponent("collapsible");
-  }
-
-  public ComponentDialect addComponent(String elementName) {
-    return addComponent(elementName, null);
   }
 
   public ComponentDialect addComponent(String elementName, String templatePath) {
