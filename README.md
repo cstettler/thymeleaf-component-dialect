@@ -2,9 +2,9 @@
 
 A dialect for Thymeleaf that enables reusable UI components with named slots and parameters.
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/ch.cstettler.thymeleaf/thymeleaf-component-dialect/badge.svg)](https://maven-badges.herokuapp.com/maven-central/ch.cstettler.thymeleaf/thymeleaf-component-dialect)
+[![Maven Central](https://img.shields.io/maven-central/v/ch.cstettler.thymeleaf/thymeleaf-component-dialect.svg)](https://central.sonatype.com/artifact/ch.cstettler.thymeleaf/thymeleaf-component-dialect)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Open Issues](https://img.shields.io/github/issues/innoq/thymeleaf-component-dialect.svg)](https://github.com/cstettler/thymeleaf-component-dialect/issues)
+[![Open Issues](https://img.shields.io/github/issues/cstettler/thymeleaf-component-dialect.svg)](https://github.com/cstettler/thymeleaf-component-dialect/issues)
 [![Build Status](https://github.com/cstettler/thymeleaf-component-dialect/actions/workflows/build.yml/badge.svg)](https://github.com/cstettler/thymeleaf-component-dialect/actions/workflows/build.yml)
 
 ## Features
