@@ -81,6 +81,14 @@ class ComponentModelProcessorTest {
   }
 
   @Test
+  void withPassAdditionalAttributes_additionalDynamicAttribute_rendersAttribute() {
+    String html = render("<pl:with-pass-additional-attributes th:attr='key=value' />");
+
+    assertMarkupEquals("<i key=\"value\">has-additional-attributes</i>" +
+                       "<b key=\"value\">also-has-additional-attributes</b>", html);
+  }
+
+  @Test
   void simple_ifConditionTrue_renders() {
     String html = render("<pl:simple th:if='true' />");
 
@@ -450,6 +458,7 @@ class ComponentModelProcessorTest {
         .addComponent("simple", "components/simple.html")
         .addComponent("with-parameter", "components/with-parameter.html")
         .addComponent("with-variable", "components/with-variable.html")
+        .addComponent("with-pass-additional-attributes", "components/with-pass-additional-attributes.html")
         .addComponent("with-default-value", "components/with-default-value.html")
         .addComponent("with-default-and-named-slots", "components/with-default-and-named-slots.html")
         .addComponent("with-default-slot", "components/with-default-slot.html")
