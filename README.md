@@ -12,6 +12,7 @@ A dialect for Thymeleaf that enables reusable UI components with named slots and
 - Define reusable UI components
 - Support for default and named slots
 - Support for component parameters
+- Supports default values for component parameters
 - Simple integration with Thymeleaf into Spring
 
 ## Installation
@@ -57,9 +58,10 @@ When directly instantiating the template engine, set the component dialect using
 
 ```html
 <!-- src/main/resources/templates/components/card.html -->
-<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="card(title)">
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="card(title)" pl:subtitle="${null}">
   <div class="card">
     <div class="card-header" th:text="${title}">Card Title</div>
+    <div th:if="${subtitle}" class="card-subtitle" th:text="${subtitle}">Card Subtitle</div>
     <div class="card-body">
       <pl:slot>
         <!-- default slot -->
@@ -85,6 +87,10 @@ Do the same accordingly for the other components.
   <div pl:slot="footer">
     <b>This will replace the footer slot content</b>
   </div>
+</pl:card>
+
+<pl:card pl:title="My Card" pl:subtitle="My Subtitle">
+  <div>This will replace the default slot content</div>
 </pl:card>
 ```
 

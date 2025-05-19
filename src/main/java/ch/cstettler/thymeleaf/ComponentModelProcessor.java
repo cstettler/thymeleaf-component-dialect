@@ -80,9 +80,15 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
     componentAttributes.forEach(structureHandler::setLocalVariable);
 
     IModel fragmentModel = loadFragmentModel(context);
+    IProcessableElementTag fragmentRootElementTag = firstOpenElementTagWithAttribute(fragmentModel, "th:fragment");
+    if (fragmentRootElementTag != null) {
+      Map<String, Object> defaultAttributes = resolveComponentAttributes (fragmentRootElementTag, context, expressionParser);
+      componentAttributes.keySet ().forEach (defaultAttributes::remove);
+      defaultAttributes.forEach (structureHandler::setLocalVariable);
+    }
     Map<String, List<ITemplateEvent>> slotContents = extractSlotContents(model);
     Map<String, ITemplateEvent> slots = extractSlots(fragmentModel);
-    IModel mergedModel = prepareModel(context, fragmentModel, additionalAttributes, slots, slotContents);
+    IModel mergedModel = prepareModel(context, fragmentModel, fragmentRootElementTag, additionalAttributes, slots, slotContents);
 
     model.reset();
     model.addModel(mergedModel);
@@ -136,6 +142,7 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
   private IModel prepareModel(
     ITemplateContext context,
     IModel fragmentModel,
+    IProcessableElementTag fragmentRootElementTag,
     Map<String, Object> additionalAttributes,
     Map<String, ITemplateEvent> slots,
     Map<String, List<ITemplateEvent>> slotContents
@@ -145,7 +152,7 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
 
     newModel.add(blockOpenElement(modelFactory, additionalAttributes));
 
-    List<ITemplateEvent> mergedElementTags = fillSlots(fragmentModel, slots, slotContents);
+    List<ITemplateEvent> mergedElementTags = fillSlots(fragmentModel, fragmentRootElementTag, slots, slotContents);
     mergedElementTags.forEach(newModel::add);
 
     newModel.add(blockCloseElement(modelFactory));
@@ -154,10 +161,12 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
   }
 
   private List<ITemplateEvent> fillSlots(
-    IModel fragmentModel, Map<String, ITemplateEvent> slots,
+    IModel fragmentModel,
+    IProcessableElementTag fragmentRootElementTag,
+    Map<String, ITemplateEvent> slots,
     Map<String, List<ITemplateEvent>> slotContents
   ) {
-    List<ITemplateEvent> fragmentElementTags = subTreeBelow(fragmentModel, firstOpenElementTagWithAttribute(fragmentModel, "th:fragment"));
+    List<ITemplateEvent> fragmentElementTags = subTreeBelow(fragmentModel, fragmentRootElementTag);
     slots.forEach((slotName, slotElementTag) -> {
       List<ITemplateEvent> slotContent = slotContents.get(slotName);
 
@@ -266,10 +275,14 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
 
   private static Object tryResolveAttributeValue(IAttribute attribute, ITemplateContext context,
     IStandardExpressionParser expressionParser) {
+    String value = attribute.getValue();
+    if (value == null) {
+      return null;
+    }
     try {
-      return expressionParser.parseExpression(context, attribute.getValue()).execute(context);
+      return expressionParser.parseExpression(context, value).execute(context);
     } catch (TemplateProcessingException e) {
-      return attribute.getValue();
+      return value;
     }
   }
 
