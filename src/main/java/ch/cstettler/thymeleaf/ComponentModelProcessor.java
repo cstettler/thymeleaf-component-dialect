@@ -26,6 +26,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.engine.TemplateManager;
 import org.thymeleaf.engine.TemplateModel;
@@ -159,8 +162,8 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
       List<ITemplateEvent> slotContent = slotContents.get(slotName);
 
       if (slotContent == null || slotContent.isEmpty()) {
-        if (slotElementTag instanceof IOpenElementTag) {
-          slotContent = fallbackSlotContent(fragmentModel, (IOpenElementTag) slotElementTag);
+        if (slotElementTag instanceof IOpenElementTag openElementTag) {
+          slotContent = fallbackSlotContent(fragmentModel, openElementTag);
         } else {
           slotContent = emptyList();
         }
@@ -194,8 +197,8 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
   }
 
   private boolean isSlot(ITemplateEvent templateEvent) {
-    if (templateEvent instanceof IProcessableElementTag) {
-      return ((IProcessableElementTag) templateEvent).getElementCompleteName().equals(dialectPrefix + ":slot");
+    if (templateEvent instanceof IProcessableElementTag elementTag) {
+      return elementTag.getElementCompleteName().equals(dialectPrefix + ":slot");
     }
 
     return false;
@@ -212,16 +215,16 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
   }
 
   private static IProcessableElementTag firstOpenOrStandaloneElementTag(IModel model) {
-    return templateEventsIn(model).stream()
-      .filter((elementTag) -> elementTag instanceof IProcessableElementTag)
+    return templateEventsIn(model)
+      .filter(elementTag -> elementTag instanceof IProcessableElementTag)
       .map(templateEvent -> (IProcessableElementTag)templateEvent)
       .findFirst()
       .orElse(null);
   }
 
   private static IProcessableElementTag firstOpenElementTagWithAttribute(IModel model, String attributeName) {
-    return templateEventsIn(model).stream()
-      .filter((elementTag) -> elementTag instanceof IOpenElementTag)
+    return templateEventsIn(model)
+      .filter(elementTag -> elementTag instanceof IOpenElementTag)
       .map(templateEvent -> (IProcessableElementTag)templateEvent)
       .filter(elementTag -> elementTag.hasAttribute(attributeName))
       .findFirst()
@@ -319,13 +322,7 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
     return subTree;
   }
 
-  private static List<ITemplateEvent> templateEventsIn(IModel model) {
-    List<ITemplateEvent> templateEvents = new ArrayList<>();
-
-    for (int i = 0; i < model.size(); i++) {
-      templateEvents.add(model.get(i));
-    }
-
-    return templateEvents;
+  private static Stream<ITemplateEvent> templateEventsIn(IModel model) {
+    return IntStream.range(0, model.size()).mapToObj (model::get);
   }
 }
