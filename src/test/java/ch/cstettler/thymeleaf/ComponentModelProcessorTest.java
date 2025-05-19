@@ -120,6 +120,27 @@ class ComponentModelProcessorTest {
   }
 
   @Test
+  void withVariable_variableDefinedAsParameter_rendersVariable() {
+    String html = render("<pl:with-variable pl:variable='|with-variable-defined:${variable}|' />");
+
+    assertMarkupEquals("<i>with-variable-defined:null</i>", html);
+  }
+
+  @Test
+  void withVariable_variableDefinedAsByWith_rendersVariable() {
+    String html = render("<pl:with-variable th:with='variable=|with-variable-defined:${variable}|' />");
+
+    assertMarkupEquals("<i>with-variable-defined:null</i>", html);
+  }
+
+  @Test
+  void withVariable_variableNotDefined_renders() {
+    String html = render("<pl:with-variable />");
+
+    assertMarkupEquals("<i></i>", html);
+  }
+
+  @Test
   void withDefaultSlot_slotContentDefined_rendersSlotContent() {
     String html = render(""
         + "<pl:with-default-slot>"
@@ -398,6 +419,7 @@ class ComponentModelProcessorTest {
     ComponentDialect componentDialect = new ComponentDialect()
         .addComponent("simple", "components/simple.html")
         .addComponent("with-parameter", "components/with-parameter.html")
+        .addComponent("with-variable", "components/with-variable.html")
         .addComponent("with-default-and-named-slots", "components/with-default-and-named-slots.html")
         .addComponent("with-default-slot", "components/with-default-slot.html")
         .addComponent("with-named-slots", "components/with-named-slots.html")
