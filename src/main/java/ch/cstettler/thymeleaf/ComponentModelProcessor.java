@@ -55,7 +55,7 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
 
     this.dialectPrefix = dialectPrefix;
     this.elementName = elementName;
-    this.templatePath = templatePath;
+    this.templatePath = templatePath != null ? templatePath : dialectPrefix + "/" + elementName + "/" + elementName;
   }
 
   @Override
@@ -90,7 +90,7 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
   }
 
   private IModel loadFragmentModel(ITemplateContext context) {
-    return parseFragmentTemplateModel(context, templatePath != null ? templatePath : "pl/" + elementName + "/" + elementName);
+    return parseFragmentTemplateModel(context, templatePath);
   }
 
   private Map<String, List<ITemplateEvent>> extractSlotContents(IModel model) {
