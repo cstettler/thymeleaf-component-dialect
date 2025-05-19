@@ -81,6 +81,14 @@ class ComponentModelProcessorTest {
   }
 
   @Test
+  void withPassAdditionalAttributes_additionalDynamicAttribute_rendersAttribute() {
+    String html = render("<pl:with-pass-additional-attributes th:attr='key=value' />");
+
+    assertMarkupEquals("<i key=\"value\">has-additional-attributes</i>" +
+                       "<b key=\"value\">also-has-additional-attributes</b>", html);
+  }
+
+  @Test
   void simple_ifConditionTrue_renders() {
     String html = render("<pl:simple th:if='true' />");
 
@@ -117,6 +125,57 @@ class ComponentModelProcessorTest {
     String html = render("<pl:with-parameter />");
 
     assertMarkupEquals("<i></i>", html);
+  }
+
+  @Test
+  void withVariable_variableDefinedAsParameter_rendersVariable() {
+    String html = render("<pl:with-variable pl:variable='|with-variable-defined:${variable}|' />");
+
+    assertMarkupEquals("<i>with-variable-defined:null</i>", html);
+  }
+
+  @Test
+  void withVariable_variableDefinedAsByWith_rendersVariable() {
+    String html = render("<pl:with-variable th:with='variable=|with-variable-defined:${variable}|' />");
+
+    assertMarkupEquals("<i>with-variable-defined:null</i>", html);
+  }
+
+  @Test
+  void withVariable_variableNotDefined_renders() {
+    String html = render("<pl:with-variable />");
+
+    assertMarkupEquals("<i></i>", html);
+  }
+
+
+  @Test
+  void withDefaultValue_variableDefinedAsParameter_rendersProvidedVariable() {
+    String html = render("<pl:with-default-value pl:variable='|with-variable-defined:${variable}|' />");
+
+    assertMarkupEquals("<i>with-variable-defined:null</i>", html);
+  }
+
+
+  @Test
+  void withDefaultValue_variableDefinedAsByWithOnParentTag_defaultValue() {
+    String html = render("<th:block th:with='variable=|with-variable-defined:${variable}|'><pl:with-default-value /></th:block>");
+
+    assertMarkupEquals("<i>default-value</i>", html);
+  }
+
+  @Test
+  void withDefaultValue_variableDefinedAsByWithOnSameTag_rendersProvidedVariableWithDefaultValuePredefined() {
+    String html = render("<pl:with-default-value th:with='variable=|with-variable-defined:${variable}|' />");
+
+    assertMarkupEquals("<i>with-variable-defined:default-value</i>", html);
+  }
+
+  @Test
+  void withDefaultValue_variableNotDefined_rendersDefaultValue() {
+    String html = render("<pl:with-default-value />");
+
+    assertMarkupEquals("<i>default-value</i>", html);
   }
 
   @Test
@@ -398,6 +457,9 @@ class ComponentModelProcessorTest {
     ComponentDialect componentDialect = new ComponentDialect()
         .addComponent("simple", "components/simple.html")
         .addComponent("with-parameter", "components/with-parameter.html")
+        .addComponent("with-variable", "components/with-variable.html")
+        .addComponent("with-pass-additional-attributes", "components/with-pass-additional-attributes.html")
+        .addComponent("with-default-value", "components/with-default-value.html")
         .addComponent("with-default-and-named-slots", "components/with-default-and-named-slots.html")
         .addComponent("with-default-slot", "components/with-default-slot.html")
         .addComponent("with-named-slots", "components/with-named-slots.html")

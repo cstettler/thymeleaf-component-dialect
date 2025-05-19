@@ -23,9 +23,14 @@ import static org.thymeleaf.standard.processor.StandardReplaceTagProcessor.PRECE
 import static org.thymeleaf.templatemode.TemplateMode.HTML;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.engine.TemplateManager;
 import org.thymeleaf.engine.TemplateModel;
@@ -36,6 +41,7 @@ import org.thymeleaf.model.IModel;
 import org.thymeleaf.model.IModelFactory;
 import org.thymeleaf.model.IOpenElementTag;
 import org.thymeleaf.model.IProcessableElementTag;
+import org.thymeleaf.model.IStandaloneElementTag;
 import org.thymeleaf.model.ITemplateEvent;
 import org.thymeleaf.processor.element.AbstractElementModelProcessor;
 import org.thymeleaf.processor.element.IElementModelStructureHandler;
@@ -55,7 +61,7 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
 
     this.dialectPrefix = dialectPrefix;
     this.elementName = elementName;
-    this.templatePath = templatePath;
+    this.templatePath = templatePath != null ? templatePath : dialectPrefix + "/" + elementName + "/" + elementName;
   }
 
   @Override
@@ -77,9 +83,15 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
     componentAttributes.forEach(structureHandler::setLocalVariable);
 
     IModel fragmentModel = loadFragmentModel(context);
+    IProcessableElementTag fragmentRootElementTag = firstOpenElementTagWithAttribute(fragmentModel, "th:fragment");
+    if (fragmentRootElementTag != null) {
+      Map<String, Object> defaultAttributes = resolveComponentAttributes (fragmentRootElementTag, context, expressionParser);
+      componentAttributes.keySet ().forEach (defaultAttributes::remove);
+      defaultAttributes.forEach (structureHandler::setLocalVariable);
+    }
     Map<String, List<ITemplateEvent>> slotContents = extractSlotContents(model);
     Map<String, ITemplateEvent> slots = extractSlots(fragmentModel);
-    IModel mergedModel = prepareModel(context, fragmentModel, additionalAttributes, slots, slotContents);
+    IModel mergedModel = prepareModel(context, fragmentModel, fragmentRootElementTag, additionalAttributes, slots, slotContents);
 
     model.reset();
     model.addModel(mergedModel);
@@ -90,7 +102,7 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
   }
 
   private IModel loadFragmentModel(ITemplateContext context) {
-    return parseFragmentTemplateModel(context, templatePath != null ? templatePath : "pl/" + elementName + "/" + elementName);
+    return parseFragmentTemplateModel(context, templatePath);
   }
 
   private Map<String, List<ITemplateEvent>> extractSlotContents(IModel model) {
@@ -133,6 +145,7 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
   private IModel prepareModel(
     ITemplateContext context,
     IModel fragmentModel,
+    IProcessableElementTag fragmentRootElementTag,
     Map<String, Object> additionalAttributes,
     Map<String, ITemplateEvent> slots,
     Map<String, List<ITemplateEvent>> slotContents
@@ -140,27 +153,81 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
     IModelFactory modelFactory = context.getModelFactory();
     IModel newModel = modelFactory.createModel();
 
-    newModel.add(blockOpenElement(modelFactory, additionalAttributes));
+    List<ITemplateEvent> fragmentElementTags = subTreeBelow(fragmentModel, fragmentRootElementTag);
+    boolean hasPassedDownAttributes = replaceAdditionalAttributes(fragmentElementTags, modelFactory, additionalAttributes);
+    if (!hasPassedDownAttributes) {
+      newModel.add(blockOpenElement(modelFactory, additionalAttributes));
+    }
 
-    List<ITemplateEvent> mergedElementTags = fillSlots(fragmentModel, slots, slotContents);
-    mergedElementTags.forEach(newModel::add);
+    fillSlots(fragmentModel, fragmentElementTags, slots, slotContents);
 
-    newModel.add(blockCloseElement(modelFactory));
+    fragmentElementTags.forEach(newModel::add);
+
+    if (!hasPassedDownAttributes) {
+      newModel.add (blockCloseElement (modelFactory));
+    }
 
     return newModel;
   }
 
-  private List<ITemplateEvent> fillSlots(
-    IModel fragmentModel, Map<String, ITemplateEvent> slots,
+  private static Map<String,String> convertObjectMapToStringMap(Map<String, Object> objectMap) {
+    Map<String, String> stringMap = new HashMap<>(objectMap.size ());
+    objectMap.forEach((key, value) -> stringMap.put(key, value != null ? value.toString() : null));
+    return stringMap;
+  }
+
+  private boolean replaceAdditionalAttributes(List<ITemplateEvent> fragmentElementTags, IModelFactory modelFactory, Map<String, Object> additionalAttributes) {
+    boolean replaced = false;
+    Set<String> removeAttributes = Collections.singleton (dialectPrefix + ":pass-additional-attributes");
+    for (int i = 0; i < fragmentElementTags.size(); i++) {
+      ITemplateEvent templateEvent = fragmentElementTags.get(i);
+      if (templateEvent instanceof IProcessableElementTag elementTag
+          && elementTag.hasAttribute (dialectPrefix, "pass-additional-attributes")) {
+        fragmentElementTags.set(i, copyTagWithModifiedAttributes (elementTag, modelFactory, additionalAttributes, removeAttributes));
+        replaced = true;
+      }
+    }
+    return replaced;
+  }
+
+  private IProcessableElementTag copyTagWithModifiedAttributes (IProcessableElementTag elementTag, IModelFactory modelFactory, Map<String, Object> additionalAttributes, Set<String> removeAttributes) {
+    Map<String,String> newAttributes = additionalAttributes == null ? new HashMap<> () : convertObjectMapToStringMap(additionalAttributes);
+    newAttributes.putAll (elementTag.getAttributeMap ());
+    if (removeAttributes != null) {
+      removeAttributes.forEach (newAttributes::remove);
+    }
+
+    if (elementTag instanceof IOpenElementTag) {
+      return modelFactory.createOpenElementTag (
+          elementTag.getElementCompleteName (),
+          newAttributes,
+          DOUBLE,
+          false
+      );
+    } else if (elementTag instanceof IStandaloneElementTag standaloneElementTag) {
+      return modelFactory.createStandaloneElementTag (
+          elementTag.getElementCompleteName (),
+          newAttributes,
+          DOUBLE,
+          false,
+          standaloneElementTag.isMinimized ()
+      );
+    }
+    throw new IllegalArgumentException ("Unsupported tag class");
+  }
+
+  private void fillSlots(
+    IModel fragmentModel,
+    List<ITemplateEvent> fragmentElementTags,
+    Map<String, ITemplateEvent> slots,
     Map<String, List<ITemplateEvent>> slotContents
   ) {
-    List<ITemplateEvent> fragmentElementTags = subTreeBelow(fragmentModel, firstOpenElementTagWithAttribute(fragmentModel, "th:fragment"));
     slots.forEach((slotName, slotElementTag) -> {
       List<ITemplateEvent> slotContent = slotContents.get(slotName);
 
       if (slotContent == null || slotContent.isEmpty()) {
-        if (slotElementTag instanceof IOpenElementTag) {
-          slotContent = fallbackSlotContent(fragmentModel, (IOpenElementTag) slotElementTag);
+        if (slotElementTag instanceof IOpenElementTag openElementTag) {
+          slotContent = fallbackSlotContent(fragmentModel, openElementTag);
         } else {
           slotContent = emptyList();
         }
@@ -168,8 +235,6 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
 
       fillSlot(fragmentElementTags, subTreeFrom(fragmentModel, slotElementTag), slotContent);
     });
-
-    return fragmentElementTags;
   }
 
   private void fillSlot(List<ITemplateEvent> templateEvents, List<ITemplateEvent> slotSubTree, List<ITemplateEvent> slotContent) {
@@ -183,8 +248,7 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
   }
 
   private static IOpenElementTag blockOpenElement(IModelFactory modelFactory, Map<String, Object> attributes) {
-    Map<String, String> attributesMap = new HashMap<>();
-    attributes.forEach((key, value) -> attributesMap.put(key, value != null ? value.toString() : null));
+    Map<String, String> attributesMap = convertObjectMapToStringMap (attributes);
 
     return modelFactory.createOpenElementTag("th:block", attributesMap, DOUBLE, false);
   }
@@ -194,8 +258,8 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
   }
 
   private boolean isSlot(ITemplateEvent templateEvent) {
-    if (templateEvent instanceof IProcessableElementTag) {
-      return ((IProcessableElementTag) templateEvent).getElementCompleteName().equals(dialectPrefix + ":slot");
+    if (templateEvent instanceof IProcessableElementTag elementTag) {
+      return elementTag.getElementCompleteName().equals(dialectPrefix + ":slot");
     }
 
     return false;
@@ -212,16 +276,16 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
   }
 
   private static IProcessableElementTag firstOpenOrStandaloneElementTag(IModel model) {
-    return templateEventsIn(model).stream()
-      .filter((elementTag) -> elementTag instanceof IProcessableElementTag)
+    return templateEventsIn(model)
+      .filter(elementTag -> elementTag instanceof IProcessableElementTag)
       .map(templateEvent -> (IProcessableElementTag)templateEvent)
       .findFirst()
       .orElse(null);
   }
 
   private static IProcessableElementTag firstOpenElementTagWithAttribute(IModel model, String attributeName) {
-    return templateEventsIn(model).stream()
-      .filter((elementTag) -> elementTag instanceof IOpenElementTag)
+    return templateEventsIn(model)
+      .filter(elementTag -> elementTag instanceof IOpenElementTag)
       .map(templateEvent -> (IProcessableElementTag)templateEvent)
       .filter(elementTag -> elementTag.hasAttribute(attributeName))
       .findFirst()
@@ -263,10 +327,14 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
 
   private static Object tryResolveAttributeValue(IAttribute attribute, ITemplateContext context,
     IStandardExpressionParser expressionParser) {
+    String value = attribute.getValue();
+    if (value == null) {
+      return null;
+    }
     try {
-      return expressionParser.parseExpression(context, attribute.getValue()).execute(context);
+      return expressionParser.parseExpression(context, value).execute(context);
     } catch (TemplateProcessingException e) {
-      return attribute.getValue();
+      return value;
     }
   }
 
@@ -319,13 +387,7 @@ class ComponentModelProcessor extends AbstractElementModelProcessor {
     return subTree;
   }
 
-  private static List<ITemplateEvent> templateEventsIn(IModel model) {
-    List<ITemplateEvent> templateEvents = new ArrayList<>();
-
-    for (int i = 0; i < model.size(); i++) {
-      templateEvents.add(model.get(i));
-    }
-
-    return templateEvents;
+  private static Stream<ITemplateEvent> templateEventsIn(IModel model) {
+    return IntStream.range(0, model.size()).mapToObj (model::get);
   }
 }

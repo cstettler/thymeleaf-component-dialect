@@ -22,20 +22,23 @@ import org.thymeleaf.processor.IProcessor;
 
 public class ComponentDialect extends AbstractProcessorDialect {
 
-  private static final String DIALECT_PREFIX = "pl";
+  private static final String DEFAULT_DIALECT_PREFIX = "pl";
 
   private final Set<IProcessor> processors;
 
   public ComponentDialect() {
-    super("Thymeleaf UI Component Dialect", DIALECT_PREFIX, 0);
+    this(DEFAULT_DIALECT_PREFIX);
+  }
+
+  public ComponentDialect(String prefix) {
+    super("Thymeleaf UI Component Dialect", prefix, 0);
 
     this.processors = new HashSet<>();
-    this.processors.add(new RemoveSlotAttributeProcessor(DIALECT_PREFIX, "slot"));
+    this.processors.add(new RemoveSlotAttributeProcessor(prefix, "slot"));
   }
 
   public ComponentDialect addComponent(String elementName, String templatePath) {
-    processors.add(new ComponentModelProcessor(DIALECT_PREFIX, elementName, templatePath));
-
+    processors.add(new ComponentModelProcessor(getPrefix (), elementName, templatePath));
     return this;
   }
 
