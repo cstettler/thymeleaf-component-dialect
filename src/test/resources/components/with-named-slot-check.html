@@ -1,0 +1,7 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="with-named-slot-check()">
+  <div>
+    <i th:if="${#pl.isSlotDefined('slot-a')}">slot-a-defined</i>
+    <i th:unless="${#pl.isSlotDefined('slot-a')}">slot-a-not-defined</i>
+    <pl:slot pl:name="slot-a"/>
+  </div>
+</th:block>

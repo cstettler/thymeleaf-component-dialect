@@ -1,0 +1,14 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="with-slot-conditional()">
+  <div th:if="${condition}">
+    <i>True</i>
+    <pl:slot>
+      <p>fallback 1</p>
+    </pl:slot>
+  </div>
+  <div th:unless="${condition}">
+    <i>False</i>
+    <pl:slot>
+      <p>fallback 2</p>
+    </pl:slot>
+  </div>
+</th:block>

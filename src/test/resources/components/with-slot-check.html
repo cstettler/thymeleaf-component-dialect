@@ -1,0 +1,7 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="with-slot-check()">
+  <div>
+    <i th:if="${#pl.defaultSlotDefined}">default-slot-defined</i>
+    <i th:unless="${#pl.defaultSlotDefined}">default-slot-not-defined</i>
+    <pl:slot/>
+  </div>
+</th:block>

@@ -18,22 +18,35 @@ package ch.cstettler.thymeleaf;
 import java.util.HashSet;
 import java.util.Set;
 import org.thymeleaf.dialect.AbstractProcessorDialect;
+import org.thymeleaf.dialect.IExpressionObjectDialect;
 import org.thymeleaf.processor.IProcessor;
+import org.thymeleaf.standard.StandardDialect;
+import org.thymeleaf.standard.processor.StandardXmlNsTagProcessor;
+import org.thymeleaf.templatemode.TemplateMode;
 
-public class ComponentDialect extends AbstractProcessorDialect {
+public class ComponentDialect extends AbstractProcessorDialect implements IExpressionObjectDialect {
 
   private static final String DEFAULT_DIALECT_PREFIX = "pl";
 
   private final Set<IProcessor> processors;
+  private final ComponentExpressionObjectFactory expressionObjectFactory;
 
   public ComponentDialect() {
     this(DEFAULT_DIALECT_PREFIX);
   }
 
   public ComponentDialect(String prefix) {
-    super("Thymeleaf UI Component Dialect", prefix, 0);
+    this(prefix, prefix);
+  }
+
+  public ComponentDialect(String prefix, String expressionObjectName) {
+    super("Thymeleaf UI Component Dialect", prefix, StandardDialect.PROCESSOR_PRECEDENCE);
+
+    this.expressionObjectFactory = new ComponentExpressionObjectFactory (expressionObjectName);
 
     this.processors = new HashSet<>();
+    this.processors.add (new StandardXmlNsTagProcessor (TemplateMode.HTML, prefix));
+    this.processors.add(new ReplaceSlotTagProcessor(prefix, "slot"));
     this.processors.add(new RemoveSlotAttributeProcessor(prefix, "slot"));
   }
 
@@ -45,5 +58,10 @@ public class ComponentDialect extends AbstractProcessorDialect {
   @Override
   public Set<IProcessor> getProcessors(String dialectPrefix) {
     return processors;
+  }
+
+  @Override
+  public ComponentExpressionObjectFactory getExpressionObjectFactory () {
+    return expressionObjectFactory;
   }
 }

@@ -94,6 +94,41 @@ Do the same accordingly for the other components.
 </pl:card>
 ```
 
+### Checking if a slot is defined
+
+Inside a component template, you can check whether the caller provided content for a slot using the `#pl` expression object.
+This allows conditional rendering based on whether slot content was supplied.
+
+Check the **default slot**:
+
+```html
+<div th:if="${#pl.defaultSlotDefined}">
+  <!-- rendered only when caller provides default slot content -->
+  <pl:slot/>
+</div>
+```
+
+Check a **named slot** by name:
+
+```html
+<div th:if="${#pl.isSlotDefined('footer')}">
+  <pl:slot pl:name="footer"/>
+</div>
+```
+
+The expression object name matches the dialect prefix (`pl` by default). When registering the dialect with a custom prefix,
+the expression object is accessible under that same prefix:
+
+```java
+new ComponentDialect("ui") // expression object becomes #ui
+```
+
+You can also provide a separate name for the expression object:
+
+```java
+new ComponentDialect("ui", "component") // expression object becomes #component
+```
+
 ## License
 
 Thymeleaf Component Dialect is Open Source software released under the

@@ -1,0 +1,9 @@
+<th:block xmlns:th="http://www.thymeleaf.org">
+  <th:block  th:fragment="with-nested-fragment()">
+    <i th:text="${variable}"></i>
+    <span th:insert="~{::other-fragment}">test</span>
+  </th:block>
+  <th:block th:fragment="other-fragment">
+    <b th:text="${variable}"></b>
+  </th:block>
+</th:block>

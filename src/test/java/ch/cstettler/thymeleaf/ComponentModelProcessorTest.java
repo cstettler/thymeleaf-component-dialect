@@ -15,34 +15,24 @@
  */
 package ch.cstettler.thymeleaf;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.TemplateSpec;
 import org.thymeleaf.context.Context;
-import org.thymeleaf.model.ICloseElementTag;
-import org.thymeleaf.model.IModel;
-import org.thymeleaf.model.IOpenElementTag;
-import org.thymeleaf.model.IStandaloneElementTag;
-import org.thymeleaf.model.ITemplateEnd;
-import org.thymeleaf.model.ITemplateEvent;
-import org.thymeleaf.model.ITemplateStart;
-import org.thymeleaf.model.IText;
+import org.thymeleaf.exceptions.TemplateInputException;
+import org.thymeleaf.model.*;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 import org.thymeleaf.templateresolver.StringTemplateResolver;
 import org.thymeleaf.templateresolver.TemplateResolution;
 
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -64,20 +54,12 @@ class ComponentModelProcessorTest {
     assertMarkupEquals("<i>simple</i>", html);
   }
 
-  @Disabled("additional attributes not yet fully supported")
   @Test
-  void simple_additionalStaticAttribute_rendersAttribute() {
-    String html = render("<pl:simple key='value' />");
+  void withPassAdditionalAttributes_additionalStaticAttribute_rendersAttribute() {
+    String html = render("<pl:with-pass-additional-attributes key='value' />");
 
-    assertMarkupEquals("<i key='value'>simple</i>", html);
-  }
-
-  @Disabled("additional attributes not yet fully supported")
-  @Test
-  void simple_additionalDynamicAttribute_rendersAttribute() {
-    String html = render("<pl:simple th:attr='key=value' />");
-
-    assertMarkupEquals("<i key='value'>simple</i>", html);
+    assertMarkupEquals("<i key=\"value\">has-additional-attributes</i>" +
+        "<b key=\"value\">also-has-additional-attributes</b>", html);
   }
 
   @Test
@@ -86,6 +68,22 @@ class ComponentModelProcessorTest {
 
     assertMarkupEquals("<i key=\"value\">has-additional-attributes</i>" +
                        "<b key=\"value\">also-has-additional-attributes</b>", html);
+  }
+
+  @Test
+  void withPassAdditionalAttributes_additionalDynamicAttribute2_rendersAttribute() {
+    String html = render("<pl:with-pass-additional-attributes th:attr=\"key=${'$value$'}\" />");
+
+    assertMarkupEquals("<i key=\"$value$\">has-additional-attributes</i>" +
+                       "<b key=\"$value$\">also-has-additional-attributes</b>", html);
+  }
+
+  @Test
+  void withPassAdditionalAttributes_additionalDynamicAttribute3_rendersAttribute() {
+    String html = render("<pl:with-pass-additional-attributes th:key=\"${'$value$'}\" />");
+
+    assertMarkupEquals("<i key=\"$value$\">has-additional-attributes</i>" +
+                       "<b key=\"$value$\">also-has-additional-attributes</b>", html);
   }
 
   @Test
@@ -114,6 +112,16 @@ class ComponentModelProcessorTest {
   }
 
   @Test
+  void simple_each_rendersMulti() {
+    Context context = new Context ();
+    context.setVariable("items", List.of("item1", "item2", "item3"));
+
+    String html = render("<pl:simple th:each='item:${items}' />", context);
+
+    assertMarkupEquals("<i>simple</i><i>simple</i><i>simple</i>", html);
+  }
+
+  @Test
   void withParameter_parameterDefined_rendersParameter() {
     String html = render("<pl:with-parameter pl:parameter='with-parameter-defined' />");
 
@@ -121,10 +129,20 @@ class ComponentModelProcessorTest {
   }
 
   @Test
-  void withParameter_parameterNotDefined_renders() {
-    String html = render("<pl:with-parameter />");
+  void withParameter_each_rendersParameter() {
+    Context context = new Context ();
+    context.setVariable("items", List.of("item1", "item2", "item3"));
 
-    assertMarkupEquals("<i></i>", html);
+    String html = render("<pl:with-parameter th:each='item:${items}' pl:parameter='${item}' />", context);
+
+    assertMarkupEquals("<i>item1</i><i>item2</i><i>item3</i>", html);
+  }
+
+  @Test
+  void withParameter_requiredParameterNotDefined_fails() {
+    assertThrows(TemplateInputException.class, () -> {
+      render("<pl:with-parameter />");
+    });
   }
 
   @Test
@@ -148,6 +166,12 @@ class ComponentModelProcessorTest {
     assertMarkupEquals("<i></i>", html);
   }
 
+  @Test
+  void withVariableCamelCase_variableDefinedAsParameter_rendersVariable() {
+    String html = render("<pl:with-variable-camelCase pl:variable-camel-case='|with-variable-defined:${variableCamelCase}|' />");
+
+    assertMarkupEquals("<i>with-variable-defined:null</i>", html);
+  }
 
   @Test
   void withDefaultValue_variableDefinedAsParameter_rendersProvidedVariable() {
@@ -162,13 +186,6 @@ class ComponentModelProcessorTest {
     String html = render("<th:block th:with='variable=|with-variable-defined:${variable}|'><pl:with-default-value /></th:block>");
 
     assertMarkupEquals("<i>default-value</i>", html);
-  }
-
-  @Test
-  void withDefaultValue_variableDefinedAsByWithOnSameTag_rendersProvidedVariableWithDefaultValuePredefined() {
-    String html = render("<pl:with-default-value th:with='variable=|with-variable-defined:${variable}|' />");
-
-    assertMarkupEquals("<i>with-variable-defined:default-value</i>", html);
   }
 
   @Test
@@ -307,6 +324,98 @@ class ComponentModelProcessorTest {
         + "  <i>with-slot-with-fallback</i>"
         + "  <p>fallback</p>"
         + "</div>", html);
+  }
+
+  @Test
+  void withNestedFragment_resolvesInnerFragment() {
+    String html = render("<pl:with-nested-fragment pl:variable='bar'></pl:with-nested-fragment>");
+
+    assertMarkupEquals("<i>bar</i><span><b>bar</b></span>", html);
+  }
+
+  @Test
+  void withNestedFragment_correctFragmentForComponent() {
+    String html = render("<pl:with-nested-fragment-other pl:variable='bar'></pl:with-nested-fragment-other>");
+
+    assertMarkupEquals("<b>bar</b>", html);
+  }
+
+  @Test
+  void withSlotConditional_replacesTheCorrectSlot_True() {
+    String html = render("<pl:with-slot-conditional pl:condition='${true}'></pl:with-slot-conditional>");
+
+    assertMarkupEquals("<div><i>True</i><p>fallback 1</p></div>", html);
+  }
+
+  @Test
+  void withSlotConditional_replacesTheCorrectSlot_False() {
+    String html = render("<pl:with-slot-conditional pl:condition='${false}'></pl:with-slot-conditional>");
+
+    assertMarkupEquals("<div><i>False</i><p>fallback 2</p></div>", html);
+  }
+
+  @Test
+  void withPassAdditionalAttributesAnsSlot_withDefaultSlotValue_rendersAdditionalAttribute() {
+    String html = render("<pl:with-pass-additional-attributes-and-slot th:title=\"${'the title'}\"></pl:with-pass-additional-attributes-and-slot>");
+
+    assertMarkupEquals(""
+                       + "<i title=\"the title\">has-additional-attributes</i>"
+                       +"<b>And Slot (default)</b>", html);
+  }
+
+  @Test
+  void withPassAdditionalAttributesAnsSlot_withValueInSlot_resolvesValue() {
+    String html = render("<pl:with-pass-additional-attributes-and-slot th:title=\"${'the title'}\" th:with=\"theValue=${'a value'}\">" +
+                         "<b>And Slot with <th:block th:text='${theValue}'></th:block></b>" +
+                         "</pl:with-pass-additional-attributes-and-slot>");
+
+    assertMarkupEquals(""
+                       + "<i title=\"the title\">has-additional-attributes</i>"
+                       +"<b>And Slot with a value</b>", html);
+  }
+
+  @Test
+  void withPassAdditionalAttributesAnsSlot_ifConditionTrue_renders() {
+    String html = render("<pl:with-pass-additional-attributes-and-slot th:title=\"${'the title'}\" th:if=\"true\"></pl:with-pass-additional-attributes-and-slot>");
+
+    assertMarkupEquals(""
+                       + "<i title=\"the title\">has-additional-attributes</i>"
+                       +"<b>And Slot (default)</b>", html);
+  }
+
+  @Test
+  void withPassAdditionalAttributesAnsSlot_ifConditionFalse_rendersNothing() {
+    String html = render("<pl:with-pass-additional-attributes-and-slot th:title=\"${'the title'}\" th:if=\"false\"></pl:with-pass-additional-attributes-and-slot>");
+
+    assertMarkupEquals("", html);
+  }
+
+  @Test
+  void withSlotCheck_defaultSlotDefined_rendersSlotDefinedIndicator() {
+    String html = render("<pl:with-slot-check><i>content</i></pl:with-slot-check>");
+
+    assertMarkupEquals("<div><i>default-slot-defined</i><i>content</i></div>", html);
+  }
+
+  @Test
+  void withSlotCheck_defaultSlotNotDefined_rendersSlotNotDefinedIndicator() {
+    String html = render("<pl:with-slot-check></pl:with-slot-check>");
+
+    assertMarkupEquals("<div><i>default-slot-not-defined</i></div>", html);
+  }
+
+  @Test
+  void withNamedSlotCheck_namedSlotDefined_rendersSlotDefinedIndicator() {
+    String html = render("<pl:with-named-slot-check><i pl:slot='slot-a'>content</i></pl:with-named-slot-check>");
+
+    assertMarkupEquals("<div><i>slot-a-defined</i><i>content</i></div>", html);
+  }
+
+  @Test
+  void withNamedSlotCheck_namedSlotNotDefined_rendersSlotNotDefinedIndicator() {
+    String html = render("<pl:with-named-slot-check></pl:with-named-slot-check>");
+
+    assertMarkupEquals("<div><i>slot-a-not-defined</i></div>", html);
   }
 
   @Test
@@ -454,16 +563,27 @@ class ComponentModelProcessorTest {
   }
 
   private static String render(String template) {
+    return render(template, new Context());
+  }
+
+  private static String render(String template, Context context) {
     ComponentDialect componentDialect = new ComponentDialect()
         .addComponent("simple", "components/simple.html")
         .addComponent("with-parameter", "components/with-parameter.html")
         .addComponent("with-variable", "components/with-variable.html")
+        .addComponent("with-variable-camelCase", "components/with-variable-camelCase.html")
         .addComponent("with-pass-additional-attributes", "components/with-pass-additional-attributes.html")
+        .addComponent("with-pass-additional-attributes-and-slot", "components/with-pass-additional-attributes-and-slot.html")
         .addComponent("with-default-value", "components/with-default-value.html")
         .addComponent("with-default-and-named-slots", "components/with-default-and-named-slots.html")
         .addComponent("with-default-slot", "components/with-default-slot.html")
         .addComponent("with-named-slots", "components/with-named-slots.html")
-        .addComponent("with-slot-with-fallback", "components/with-slot-with-fallback.html");
+        .addComponent("with-slot-with-fallback", "components/with-slot-with-fallback.html")
+        .addComponent("with-nested-fragment", "components/with-nested-fragment.html")
+        .addComponent("with-nested-fragment-other", "components/with-nested-fragment.html :: other-fragment")
+        .addComponent("with-slot-conditional", "components/with-slot-conditional.html")
+        .addComponent("with-slot-check", "components/with-slot-check.html")
+        .addComponent("with-named-slot-check", "components/with-named-slot-check.html");
 
     TemplateEngine templateEngine = new TemplateEngine();
     templateEngine.setTemplateResolvers(setOf(new TemplateResolverChain(new ClassLoaderTemplateResolver(), new StringTemplateResolver())));
@@ -471,7 +591,7 @@ class ComponentModelProcessorTest {
     templateEngine.setCacheManager(null);
     templateEngine.clearTemplateCache();
 
-    String result = templateEngine.process(new TemplateSpec(template, HTML), new Context());
+    String result = templateEngine.process(new TemplateSpec(template, HTML), context);
 
     return result.trim();
   }
